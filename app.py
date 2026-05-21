@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import joblib
@@ -6,6 +5,8 @@ from pathlib import Path
 import config
 import os
 import subprocess
+import shap
+import matplotlib.pyplot as plt
 
 # --- AUTOMATED PIPELINE TRIGGER FOR DEPLOYMENT ---
 if not os.path.exists('models/preprocessor.joblib') or not os.path.exists('models/xgboost_model.joblib'):
@@ -85,3 +86,25 @@ if st.button("Predict Churn Risk", type="primary"):
         st.error(f"🚨 **High Churn Risk!** Probability: **{probability:.2%}**")
     else:
         st.success(f"✅ **Customer is likely to stay.** Churn Probability: **{probability:.2%}**")
+
+    # --- SHAP EXPLANATION SECTION ---
+    st.divider()
+    st.subheader("🧠 Why did the AI make this prediction?")
+    st.write("This waterfall chart shows exactly how each variable pushed the churn probability up or down.")
+
+    with st.spinner("Generating AI explanation..."):
+        # 1. Transform the raw input using your saved preprocessor
+        processed_data = preprocessor.transform(input_data)
+        
+        # 2. Extract the actual feature names from the preprocessor 
+        feature_names = preprocessor.get_feature_names_out()
+        processed_df = pd.DataFrame(processed_data, columns=feature_names)
+
+        # 3. Create the SHAP Explainer using your XGBoost model
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer(processed_df)
+
+        # 4. Draw the Waterfall plot and force Streamlit to render it
+        fig, ax = plt.subplots(figsize=(10, 5))
+        shap.plots.waterfall(shap_values[0], show=False)
+        st.pyplot(fig)

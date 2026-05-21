@@ -5,3 +5,5 @@ xgboost
 imbalanced-learn
 joblib
 streamlit
+shap
+matplotlib
