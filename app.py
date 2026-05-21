@@ -4,6 +4,14 @@ import pandas as pd
 import joblib
 from pathlib import Path
 import config
+import os
+import subprocess
+
+# --- AUTOMATED PIPELINE TRIGGER FOR DEPLOYMENT ---
+if not os.path.exists('models/preprocessor.joblib') or not os.path.exists('models/xgboost_model.joblib'):
+    st.info("📦 Initializing cloud environment and training XGBoost model... Please wait a moment.")
+    subprocess.run(["python", "src/model_pipeline.py"])
+    st.rerun()
 
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
 
